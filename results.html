@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Rick and Morty Characters</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #111;
+      color: #fff;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .card {
+      background-color: #222;
+      border-radius: 10px;
+      width: 180px;
+      margin: 10px;
+      padding: 15px;
+      text-align: center;
+    }
+    img {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+    }
+    .name {
+      font-weight: bold;
+      margin: 10px 0 5px;
+    }
+    .location {
+      font-size: 0.9em;
+      color: #bbb;
+    }
+  </style>
+</head>
+<body>
+  <h1>Rick and Morty Characters</h1>
+  <div class="container" id="container"></div>
+
+  <script>
+    const data = [{"image":"https://rickandmortyapi.com/api/character/avatar/1.jpeg","location":"Citadel of Ricks","name":"Rick Sanchez"},{"image":"https://rickandmortyapi.com/api/character/avatar/3.jpeg","location":"Earth (Replacement Dimension)","name":"Summer Smith"},{"image":"https://rickandmortyapi.com/api/character/avatar/4.jpeg","location":"Earth (Replacement Dimension)","name":"Beth Smith"},{"image":"https://rickandmortyapi.com/api/character/avatar/5.jpeg","location":"Earth (Replacement Dimension)","name":"Jerry Smith"},{"image":"https://rickandmortyapi.com/api/character/avatar/17.jpeg","location":"Anatomy Park","name":"Annie"},{"image":"https://rickandmortyapi.com/api/character/avatar/37.jpeg","location":"Earth (C-500A)","name":"Beth Sanchez"},{"image":"https://rickandmortyapi.com/api/character/avatar/38.jpeg","location":"Earth (C-137)","name":"Beth Smith"},{"image":"https://rickandmortyapi.com/api/character/avatar/39.jpeg","location":"Earth (Evil Rick's Target Dimension)","name":"Beth Smith"},{"image":"https://rickandmortyapi.com/api/character/avatar/45.jpeg","location":"Earth (C-137)","name":"Bill"}, /* ... וכל השאר ... */ {"image":"https://rickandmortyapi.com/api/character/avatar/768.jpeg","location":"Earth (Replacement Dimension)","name":"Mary-Lou"}];
+
+    const container = document.getElementById('container');
+    data.forEach(char => {
+      container.innerHTML += `
+        <div class="card">
+          <img src="${char.image}" alt="${char.name}">
+          <div class="name">${char.name}</div>
+          <div class="location">${char.location}</div>
+        </div>
+      `;
+    });
+  </script>
+</body>
+</html>
+

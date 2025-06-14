@@ -1,0 +1,17 @@
+replicaCount: 1
+
+image:
+  repository: rick-api
+  tag: "latest"
+  pullPolicy: Never
+
+service:
+  type: NodePort
+  port: 80
+  targetPort: 5050
+
+ingress:
+  enabled: true
+  className: nginx
+  host: rick.local
+

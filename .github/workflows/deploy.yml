@@ -1,0 +1,47 @@
+name: CI/CD - Rick and Morty App
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v3
+
+    - name: 🐳 Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: 🔧 Set up Kubernetes with Kind
+      uses: helm/kind-action@v1.6.0
+      with:
+        cluster_name: rick-cluster
+
+    - name: 🧱 Build Docker image
+      run: |
+        docker build -t rick-api:latest .
+
+    - name: 🚀 Load image into kind cluster
+      run: |
+        kind load docker-image rick-api:latest --name rick-cluster
+
+    - name: 📦 Deploy to Kubernetes
+      run: |
+        kubectl apply -f yamls/deployment.yaml
+        kubectl apply -f yamls/service.yaml
+
+    - name: ⏳ Wait for pods to be ready
+      run: |
+        kubectl wait --for=condition=ready pod -l app=rick-api --timeout=90s
+
+    - name: 🧪 Test /healthcheck endpoint
+      run: |
+        POD_NAME=$(kubectl get pods -l app=rick-api -o jsonpath="{.items[0].metadata.name}")
+        kubectl port-forward $POD_NAME 5050:5050 &
+        sleep 5
+        curl -f http://localhost:5050/healthcheck
+
