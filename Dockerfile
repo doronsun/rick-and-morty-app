@@ -12,8 +12,8 @@ COPY . .
 # 4. מתקין את הספריות הדרושות (Flask, requests)
 RUN pip install --no-cache-dir flask requests
 
-# 5. פותח פורט 5050 בתוך הקונטיינר
-EXPOSE 5050
+# 5. פותח פורט 8080 בתוך הקונטיינר
+EXPOSE 8080
 
 # 6. מריץ את האפליקציה
 CMD ["python", "app.py"]
