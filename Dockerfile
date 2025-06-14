@@ -10,11 +10,18 @@ WORKDIR /app
 COPY . .
 
 # 4. מתקין את הספריות הדרושות (Flask, requests)
-RUN pip install --no-cache-dir flask requests
+RUN pip install --no-cache-dir flask requests && \
+    # בדיקה שההתקנה הצליחה
+    python -c "import flask; import requests" || exit 1
 
-# 5. פותח פורט 8080 בתוך הקונטיינר
+# 5. מייצר את קובץ ה-CSV
+RUN python fetch_characters.py && \
+    # בדיקה שהקובץ נוצר
+    if [ ! -f "results.csv" ]; then echo "קובץ results.csv לא נוצר!" && exit 1; fi
+
+# 6. פותח פורט 8080 בתוך הקונטיינר
 EXPOSE 8080
 
-# 6. מריץ את האפליקציה
+# 7. מריץ את האפליקציה
 CMD ["python", "app.py"]
 

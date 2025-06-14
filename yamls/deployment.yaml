@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: rick-api
-          image: rick-api
+          image: rick-api:latest
           imagePullPolicy: Never
           ports:
             - containerPort: 8080
@@ -29,12 +29,24 @@ spec:
             httpGet:
               path: /healthcheck
               port: 8080
-            initialDelaySeconds: 5
+            initialDelaySeconds: 10
             periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
           readinessProbe:
             httpGet:
               path: /healthcheck
               port: 8080
-            initialDelaySeconds: 5
+            initialDelaySeconds: 10
             periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /healthcheck
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
 

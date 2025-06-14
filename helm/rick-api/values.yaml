@@ -3,7 +3,7 @@ replicaCount: 1
 image:
   repository: rick-api
   tag: "latest"
-  pullPolicy: Never
+  pullPolicy: IfNotPresent
 
 service:
   type: NodePort
@@ -27,11 +27,15 @@ probes:
   liveness:
     path: /healthcheck
     port: 8080
-    initialDelaySeconds: 5
-    periodSeconds: 10
+    initialDelaySeconds: 30
+    periodSeconds: 20
+    timeoutSeconds: 5
+    failureThreshold: 3
   readiness:
     path: /healthcheck
     port: 8080
-    initialDelaySeconds: 5
-    periodSeconds: 10
+    initialDelaySeconds: 30
+    periodSeconds: 20
+    timeoutSeconds: 5
+    failureThreshold: 3
 

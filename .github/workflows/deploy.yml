@@ -13,40 +13,144 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Docker
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flask requests
+
+      - name: Run data collection script
+        run: |
+          python fetch_characters.py
+          echo "Data collection completed. CSV file created."
+          # בדיקה שהקובץ נוצר
+          if [ ! -f "results.csv" ]; then
+            echo "שגיאה: קובץ results.csv לא נוצר!"
+            exit 1
+          fi
+          # הצגת מספר השורות בקובץ
+          wc -l results.csv
+
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
       - name: Build Docker image
         run: |
-          docker build -t rick-and-morty-app:latest .
-
-      - name: Set up Kubernetes
-        uses: azure/setup-kubectl@v3
-        with:
-          version: 'latest'
+          docker build -t rick-api:latest .
+          echo "Docker image built successfully."
+          # בדיקה שהתמונה נוצרה
+          docker images | grep rick-api
 
       - name: Set up Minikube
         uses: medyagh/setup-minikube@master
+        with:
+          minikube version: 'v1.36.0'
+          driver: docker
+          kubernetes-version: 'v1.33.1'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Deploy to Minikube
+      - name: Install specific kubectl version
         run: |
-          minikube start
-          kubectl apply -f yamls/
-          kubectl wait --for=condition=available --timeout=300s deployment/rick-api-deployment
+          # התקנת גרסת kubectl שתואמת לגרסת Kubernetes
+          curl -LO "https://dl.k8s.io/release/v1.33.1/bin/linux/amd64/kubectl"
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/
+          kubectl version --client
+
+      - name: Load Docker image into Minikube
+        run: |
+          minikube image load rick-api:latest
+          echo "Image loaded into Minikube"
+          # בדיקה שהתמונה נטענה
+          minikube image list | grep rick-api
+
+      - name: Deploy to Kubernetes
+        run: |
+          # Install Helm
+          curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+          
+          # Deploy using Helm
+          helm upgrade --install rick-api ./helm/rick-api \
+            --set image.repository=rick-api \
+            --set image.tag=latest \
+            --set image.pullPolicy=IfNotPresent
+          
+          # Wait for deployment to be ready with increased timeout
+          echo "ממתין לפריסה להסתיים..."
+          kubectl rollout status deployment/rick-api-deployment --timeout=600s || true
+          
+          # בדיקת סטטוס הפוד
+          echo "בודק סטטוס פוד..."
+          kubectl get pods
+          echo "פרטי הפוד:"
+          kubectl describe pods -l app=rick-api
+          
+          # בדיקת לוגים
+          echo "לוגים של הפוד:"
+          kubectl logs -l app=rick-api
+          
+          # בדיקת אירועים
+          echo "אירועים במערכת:"
+          kubectl get events --sort-by='.lastTimestamp'
+
+      - name: Wait for service to be ready
+        run: |
+          # Get the Minikube IP
+          MINIKUBE_IP=$(minikube ip)
+          
+          # Wait for the application to be ready
+          echo "ממתין לאפליקציה להיות מוכנה..."
+          
+          # Try to connect to the service for up to 2 minutes
+          for i in {1..24}; do
+            if curl -s http://$MINIKUBE_IP:8080/healthcheck > /dev/null; then
+              echo "האפליקציה זמינה!"
+              break
+            fi
+            if [ $i -eq 24 ]; then
+              echo "שגיאה: האפליקציה לא זמינה אחרי 2 דקות"
+              kubectl describe pods -l app=rick-api
+              kubectl logs -l app=rick-api
+              kubectl get events --sort-by='.lastTimestamp'
+              exit 1
+            fi
+            echo "ממתין... ניסיון $i מתוך 24"
+            sleep 5
+          done
 
       - name: Test endpoints
         run: |
-          # Wait for service to be ready
-          sleep 30
+          MINIKUBE_IP=$(minikube ip)
           
           # Test healthcheck endpoint
-          curl --fail http://$(minikube ip):$(kubectl get svc rick-api-service -o jsonpath='{.spec.ports[0].nodePort}')/healthcheck
+          echo "בודק את נקודת הקצה healthcheck..."
+          if ! curl -s -f http://$MINIKUBE_IP:8080/healthcheck > /dev/null; then
+            echo "שגיאה: healthcheck endpoint לא זמין"
+            kubectl describe pods -l app=rick-api
+            kubectl logs -l app=rick-api
+            kubectl get events --sort-by='.lastTimestamp'
+            exit 1
+          fi
           
           # Test characters endpoint
-          curl --fail http://$(minikube ip):$(kubectl get svc rick-api-service -o jsonpath='{.spec.ports[0].nodePort}')/characters
+          echo "בודק את נקודת הקצה characters..."
+          if ! curl -s -f http://$MINIKUBE_IP:8080/characters > /dev/null; then
+            echo "שגיאה: characters endpoint לא זמין"
+            kubectl describe pods -l app=rick-api
+            kubectl logs -l app=rick-api
+            kubectl get events --sort-by='.lastTimestamp'
+            exit 1
+          fi
+          
+          echo "כל הבדיקות עברו בהצלחה!"
 
       - name: Clean up
+        if: always()
         run: |
-          minikube stop
           minikube delete
+          docker system prune -f
 
