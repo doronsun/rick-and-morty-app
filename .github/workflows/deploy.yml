@@ -94,6 +94,12 @@ jobs:
           echo "פרטי הפוד:"
           kubectl describe pods -l app=rick-api
           
+          # בדיקת סטטוס השירות
+          echo "בודק סטטוס שירות..."
+          kubectl get svc
+          echo "פרטי השירות:"
+          kubectl describe svc rick-api-service
+          
           # בדיקת לוגים
           echo "לוגים של הפוד:"
           kubectl logs -l app=rick-api
@@ -106,13 +112,23 @@ jobs:
         run: |
           # Get the Minikube IP
           MINIKUBE_IP=$(minikube ip)
+          echo "Minikube IP: $MINIKUBE_IP"
+          
+          # בדיקת חיבור בסיסית
+          echo "בודק חיבור בסיסי..."
+          ping -c 1 $MINIKUBE_IP || true
+          
+          # בדיקת פורטים פתוחים
+          echo "בודק פורטים פתוחים..."
+          kubectl get svc rick-api-service -o jsonpath='{.spec.ports[0].nodePort}'
           
           # Wait for the application to be ready
           echo "ממתין לאפליקציה להיות מוכנה..."
           
           # Try to connect to the service for up to 2 minutes
           for i in {1..24}; do
-            if curl -s http://$MINIKUBE_IP:30080/healthcheck > /dev/null; then
+            echo "מנסה להתחבר ל-http://$MINIKUBE_IP:30080/healthcheck"
+            if curl -v http://$MINIKUBE_IP:30080/healthcheck > /dev/null 2>&1; then
               echo "האפליקציה זמינה!"
               break
             fi
