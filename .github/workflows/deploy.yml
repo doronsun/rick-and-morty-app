@@ -112,7 +112,7 @@ jobs:
           
           # Try to connect to the service for up to 2 minutes
           for i in {1..24}; do
-            if curl -s http://$MINIKUBE_IP:8080/healthcheck > /dev/null; then
+            if curl -s http://$MINIKUBE_IP:30080/healthcheck > /dev/null; then
               echo "האפליקציה זמינה!"
               break
             fi
@@ -133,7 +133,7 @@ jobs:
           
           # Test healthcheck endpoint
           echo "בודק את נקודת הקצה healthcheck..."
-          if ! curl -s -f http://$MINIKUBE_IP:8080/healthcheck > /dev/null; then
+          if ! curl -s -f http://$MINIKUBE_IP:30080/healthcheck > /dev/null; then
             echo "שגיאה: healthcheck endpoint לא זמין"
             kubectl describe pods -l app=rick-api
             kubectl logs -l app=rick-api
@@ -143,7 +143,7 @@ jobs:
           
           # Test characters endpoint
           echo "בודק את נקודת הקצה characters..."
-          if ! curl -s -f http://$MINIKUBE_IP:8080/characters > /dev/null; then
+          if ! curl -s -f http://$MINIKUBE_IP:30080/characters > /dev/null; then
             echo "שגיאה: characters endpoint לא זמין"
             kubectl describe pods -l app=rick-api
             kubectl logs -l app=rick-api
