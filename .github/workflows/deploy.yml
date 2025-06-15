@@ -45,14 +45,18 @@ jobs:
           # בדיקה שהתמונה נוצרה
           docker images | grep rick-api
 
-      - name: Set up Minikube
-        uses: medyagh/setup-minikube@master
-        with:
-          minikube-version: 'v1.36.0'
-          driver: docker
-          kubernetes-version: 'v1.33.1'
-          start: true
-          wait: true
+      - name: Install Minikube
+        run: |
+          # התקנת Minikube
+          curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+          sudo install minikube-linux-amd64 /usr/local/bin/minikube
+          minikube version
+
+      - name: Start Minikube
+        run: |
+          # הפעלת Minikube
+          minikube start --driver=docker --kubernetes-version=v1.33.1
+          minikube status
 
       - name: Install specific kubectl version
         run: |
