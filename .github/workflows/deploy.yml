@@ -48,10 +48,11 @@ jobs:
       - name: Set up Minikube
         uses: medyagh/setup-minikube@master
         with:
-          minikube version: 'v1.36.0'
+          minikube-version: 'v1.36.0'
           driver: docker
           kubernetes-version: 'v1.33.1'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          start: true
+          wait: true
 
       - name: Install specific kubectl version
         run: |
